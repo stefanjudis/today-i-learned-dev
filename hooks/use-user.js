@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import firebase from "firebase/app";
 import "firebase/auth";
+import cookies from "js-cookie";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCOE8i9fRFWEoNJKxxwjvI0WUFaUmYwd8A",
-  authDomain: "today-i-learned-dev-b6852.firebaseapp.com",
-  databaseURL: "https://today-i-learned-dev-b6852.firebaseio.com",
-  projectId: "today-i-learned-dev-b6852",
-  storageBucket: "today-i-learned-dev-b6852.appspot.com",
-  messagingSenderId: "617582590003",
-  appId: "1:617582590003:web:aa7b1f105e78050f3b4b46",
+  apiKey: process.env.NEXT_PUBLIC_FB_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FB_AUTH_DOMAIN,
+  databaseURL: process.env.NEXT_PUBLIC_FB_DATABASE_URL,
+  projectId: process.env.NEXT_PUBLIC_FB_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FB_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FB_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FB_APP_ID,
 };
 
 if (!firebase.apps.length) {
@@ -18,20 +19,25 @@ if (!firebase.apps.length) {
 
 const provider = new firebase.auth.GithubAuthProvider();
 
-const LOCAL_STORAGE_USER_KEY = "renesKey";
+const COOKIE_KEY = "auth";
 
-function getUser() {
-  try {
-    const user = JSON.parse(localStorage[LOCAL_STORAGE_USER_KEY]);
-    if (Object.keys(user).length) {
-      return user;
-    }
-
-    return null;
-  } catch (error) {
-    return null;
+export const getUserFromCookie = () => {
+  const cookie = cookies.get(COOKIE_KEY);
+  if (!cookie) {
+    return;
   }
-}
+  return JSON.parse(cookie);
+};
+
+export const setUserCookie = (user) => {
+  cookies.set(COOKIE_KEY, user, {
+    // firebase id tokens expire in one hour
+    // set cookie expiry to match
+    expires: 1 / 24,
+  });
+};
+
+export const removeUserCookie = () => cookies.remove("auth");
 
 async function getMappedUser(user) {
   try {
@@ -42,13 +48,11 @@ async function getMappedUser(user) {
       email,
       token,
     };
-  } catch (error) {
-    console.log("im throwing");
-  }
+  } catch (error) {}
 }
 
 const useUser = () => {
-  const [user, setUser] = useState(getUser());
+  const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
 
   const login = () => {
@@ -60,14 +64,8 @@ const useUser = () => {
         // var token = result.credential.accessToken;
         // The signed-in user info.
         const { user } = result;
-        console.log("loggedin", { user });
-        // debugger;
         const mappedUser = await getMappedUser(user);
-        // console.log(await user.getIdToken(true));
-        localStorage.setItem(
-          LOCAL_STORAGE_USER_KEY,
-          JSON.stringify(mappedUser)
-        );
+        setUserCookie(mappedUser);
         setUser(mappedUser);
       })
       .catch(function (error) {
@@ -80,7 +78,7 @@ const useUser = () => {
       .auth()
       .signOut()
       .then(() => {
-        localStorage.removeItem(LOCAL_STORAGE_USER_KEY);
+        removeUserCookie();
         setUser(null);
       })
       .catch((e) => {
@@ -89,18 +87,17 @@ const useUser = () => {
   };
 
   useEffect(() => {
+    setUser(getUserFromCookie());
+
     const cancelAuthListener = firebase
       .auth()
       .onIdTokenChanged(async (user) => {
         if (user) {
-          const mappedUser = getMappedUser(user);
-          localStorage.setItem(
-            LOCAL_STORAGE_USER_KEY,
-            JSON.stringify(mappedUser)
-          );
+          const mappedUser = await getMappedUser(user);
+          setUserCookie(mappedUser);
           setUser(mappedUser);
         } else {
-          localStorage.removeItem(LOCAL_STORAGE_USER_KEY);
+          removeUserCookie();
           setUser(null);
         }
       });
@@ -113,32 +110,4 @@ const useUser = () => {
   return { user, login, logout, error };
 };
 
-export { useUser };
-
-// // Firebase updates the id token every hour, this
-//     // makes sure the react state and the cookie are
-//     // both kept up to date
-//     const cancelAuthListener = firebase
-//       .auth()
-//       .onIdTokenChanged(async (user) => {
-//         if (user) {
-//           const userData = await mapUserData(user);
-//           setUserCookie(userData);
-//           setUser(userData);
-//         } else {
-//           removeUserCookie();
-//           setUser();
-//         }
-//       });
-
-//     const userFromCookie = getUserFromCookie();
-//     if (!userFromCookie) {
-//       router.push("/");
-//       return;
-//     }
-//     setUser(userFromCookie);
-
-//     return () => {
-//       cancelAuthListener();
-//     };
-//     // eslint-disable-next-line react-hooks/exhaustive-deps
+export default useUser;

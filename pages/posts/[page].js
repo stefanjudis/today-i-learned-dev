@@ -1,6 +1,9 @@
 import Head from "next/head";
 import parser from "rss-url-parser";
 import { tilRssFeedUrls } from "../../config";
+import useFirestore from "../../hooks/use-firestore";
+import useUser from "../../hooks/use-user";
+import { getTilPostIdFromUrl } from "../../utils/utils";
 
 const POSTS_PER_PAGE = 10;
 
@@ -19,10 +22,13 @@ export async function getStaticProps({ params }) {
     pageNumber * POSTS_PER_PAGE
   );
 
+  console.log(articles[0]);
+
   return {
     props: {
-      articles: articles.map(({ date, title }) => ({
+      articles: articles.map(({ date, link, title }) => ({
         title,
+        link,
         date: date.toISOString().substr(0, 10),
       })),
     },
@@ -43,6 +49,9 @@ export async function getStaticPaths() {
 }
 
 export default function Home({ articles }) {
+  const { user, logout, login, error } = useUser();
+  const { tilPostsMap, upvoteTilPostByUser } = useFirestore();
+
   return (
     <div>
       <Head>
@@ -54,9 +63,26 @@ export default function Home({ articles }) {
         <h1>Today-I-learned.dev</h1>
 
         <ul>
-          {articles.map(({ date, title }) => (
+          {articles.map(({ date, link, title }) => (
             <li key={title}>
-              {title} {date}
+              {user ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    upvoteTilPostByUser(link, user.email);
+                  }}
+                >
+                  upvote this article
+                </button>
+              ) : (
+                ""
+              )}
+              <a href={link}>{title}</a>
+              <span>
+                {tilPostsMap[getTilPostIdFromUrl(link)]
+                  ? tilPostsMap[getTilPostIdFromUrl(link)].upvoters.length
+                  : "0"}
+              </span>
             </li>
           ))}
         </ul>

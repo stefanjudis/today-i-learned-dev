@@ -1,14 +1,10 @@
-import { useEffect } from "react";
 import Head from "next/head";
 import styles from "../styles/Home.module.css";
-import firebase from "firebase/app";
 import "firebase/auth";
-import { useUser } from "../hooks/use-user";
+import useUser from "../hooks/use-user";
 
-export default function Home({ articles }) {
+export default function Home() {
   const { user, logout, login, error } = useUser();
-
-  console.log({ user, logout, login, error });
 
   return (
     <div className={styles.container}>
