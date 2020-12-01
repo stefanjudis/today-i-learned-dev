@@ -23,3 +23,21 @@ a {
 .u-margin-left-small {
   margin-left: 0.5em;
 }
+
+.btn {
+  padding: 0.25em 0.5em;
+  font-size: 1em;
+  box-shadow: 0 0.125em 0.125em var(--shadow-color);
+  border: 1px solid currentColor;
+  border-radius: 0.25em;
+  color: var(--text-color);
+}
+
+.btn:hover {
+  background: white;
+}
+
+.btn:focus,
+.btn:active {
+  box-shadow: none;
+}

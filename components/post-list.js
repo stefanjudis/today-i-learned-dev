@@ -1,36 +1,18 @@
+import useTilPosts from "../hooks/use-til-posts";
 import useUser from "../hooks/use-user";
-import firebase from "firebase/app";
-import "firebase/firestore";
-import { useCollection } from "react-firebase-hooks/firestore";
-
-if (!firebase.apps.length) {
-  firebase.initializeApp({
-    apiKey: process.env.NEXT_PUBLIC_FB_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FB_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FB_PROJECT_ID,
-  });
-}
-const db = firebase.firestore();
-const FIRESTORE_DATABASE_ID = "tilPosts";
-const FIRESTORE_DATABASE = db.collection(FIRESTORE_DATABASE_ID);
 
 const PostList = () => {
   const { user } = useUser();
-  const [value, loading, error] = useCollection(
-    firebase.firestore().collection(FIRESTORE_DATABASE_ID),
-    {
-      snapshotListenOptions: { includeMetadataChanges: true },
-    }
-  );
+  const { tilPosts, loading, error, updateTilPost } = useTilPosts();
 
-  if (!value) {
+  if (loading) {
     return "loading...";
   }
 
   return (
     <>
       <ul>
-        {value.docs.map((doc) => {
+        {tilPosts.map((doc) => {
           const { url, title, upvoters } = doc.data();
 
           return (
@@ -47,11 +29,11 @@ const PostList = () => {
                       const newUpvoters = upvoters.filter(
                         (userId) => userId !== user.id
                       );
-                      FIRESTORE_DATABASE.doc(doc.id).update({
+                      updateTilPost(doc.id, {
                         upvoters: newUpvoters,
                       });
                     } else {
-                      FIRESTORE_DATABASE.doc(doc.id).update({
+                      updateTilPost(doc.id, {
                         upvoters: [...upvoters, user.id],
                       });
                     }

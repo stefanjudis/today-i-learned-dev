@@ -1,8 +1,7 @@
 import useUser from "../hooks/use-user";
 import styles from "./header.module.css";
-import utilStyles from "../styles/util.module.css";
 import Container from "./container";
-import Button from "./button";
+import Link from "next/link";
 
 const Header = () => {
   const { user, logout, login, error } = useUser();
@@ -16,17 +15,23 @@ const Header = () => {
             {user ? (
               <>
                 <span> Hello {user.email}</span>
-                <Button
-                  className="u-margin-left-small"
+                <Link href="/submit/">
+                  <a className="btn">Submit a learning</a>
+                </Link>
+                <button
+                  className="btn u-margin-left-small"
                   onClick={() => logout()}
                 >
                   Log out
-                </Button>
+                </button>
               </>
             ) : (
-              <Button className="u-margin-left-small" onClick={() => login()}>
+              <button
+                className="btn u-margin-left-small"
+                onClick={() => login()}
+              >
                 Log in
-              </Button>
+              </button>
             )}
           </div>
         </div>
