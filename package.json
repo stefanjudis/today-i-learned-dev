@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev -p 8080",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "export": "next export"
   },
   "dependencies": {
     "firebase": "^8.0.1",
@@ -15,7 +16,6 @@
     "react": "17.0.1",
     "react-dom": "17.0.1",
     "react-firebase-hooks": "^2.2.0",
-    "react-hook-form": "^6.11.5",
-    "rss-url-parser": "^2.1.1"
+    "react-hook-form": "^6.11.5"
   }
 }
